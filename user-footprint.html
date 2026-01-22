@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人足迹打卡</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="nav">
+    <div class="container">
+        <a href="index.html">首页</a>
+        <a href="user-footprint.html" class="active">个人足迹</a>
+        <a href="check-in.html">大众打卡</a>
+        <a href="story.html">文化故事</a>
+        <a href="collection.html">文化藏品</a>
+    </div>
+</div>
+
+<div class="container">
+    <!-- 个人足迹打卡表单 -->
+    <div class="card">
+        <h2>我的足迹打卡</h2>
+        <form id="footprintForm">
+            <div class="form-group">
+                <label for="footprintContent">打卡内容</label>
+                <textarea id="footprintContent" required placeholder="记录你的文化足迹..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="footprintLocation">打卡地点</label>
+                <input type="text" id="footprintLocation" required>
+            </div>
+            <div class="form-group">
+                <label for="footprintImg">足迹图片URL</label>
+                <input type="text" id="footprintImg" placeholder="上传你的打卡照片...">
+            </div>
+            <button type="submit" class="btn btn-primary">提交足迹</button>
+        </form>
+    </div>
+
+    <!-- 个人足迹列表 -->
+    <div class="card">
+        <h2>我的足迹记录</h2>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>打卡内容</th>
+                <th>打卡地点</th>
+                <th>打卡时间</th>
+                <th>足迹图片</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody id="footprintTable">
+            <tr><td colspan="6" class="loading-text" style="text-align:center; padding:20px;">加载中...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.staticfile.org/axios/1.6.8/axios.min.js"></script>
+<script src="js/api.js"></script>
+<script>
+    // 页面加载时执行
+    window.onload = async () => {
+        // 调用通用初始化
+        await initPage("footprint");
+    };
+</script>
+</body>
+</html>

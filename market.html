@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>藏品集市</title>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+        .market-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .market-header h1 {
+            font-size: 28px;
+            color: #333;
+        }
+        .market-header p {
+            color: #666;
+            margin: 10px 0;
+        }
+        .collection-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .collection-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: box-shadow 0.3s;
+        }
+        .collection-card:hover {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .collection-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .collection-card h3 {
+            font-size: 18px;
+            color: #333;
+            margin: 10px 0;
+        }
+        .collection-card .price {
+            color: #f60;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .collection-card .stock {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .buy-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .buy-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .loading-text {
+            text-align: center;
+            padding: 50px 0;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="market-header">
+        <h1>藏品集市</h1>
+        <p>购买/交易数字藏品，参与文化藏品流通</p>
+    </div>
+    <div id="collectionList" class="collection-list">
+        <div class="loading-text">加载中...</div>
+    </div>
+</div>
+
+<script src="https://cdn.staticfile.org/axios/1.6.8/axios.min.js"></script>
+<script src="js/api.js"></script>
+<script>
+    // 初始化集市页面
+    async function initMarketPage() {
+        await initLoginStatus(); // 先初始化登录状态
+        loadCollections();
+    }
+
+    // 加载藏品列表
+    async function loadCollections() {
+        const listEl = document.getElementById('collectionList');
+        try {
+            const collections = await getAllCollections(); // 调用api.js中已有的接口
+            if (collections && collections.length > 0) {
+                let html = '';
+                collections.forEach(item => {
+                    html += `
+                            <div class="collection-card">
+                                <img src="${item.collectionCoverUrl || 'images/default-collection.png'}" alt="${item.name}">
+                                <h3>${item.name}</h3>
+                                <p class="price">${item.price || 0} 元</p>
+                                <p class="stock">库存：${item.stock || 0}</p>
+                                <button class="buy-btn" onclick="buyCollection(${item.id})" ${item.stock <= 0 ? 'disabled' : ''}>
+                                    ${item.stock <= 0 ? '库存不足' : '立即购买'}
+                                </button>
+                            </div>
+                        `;
+                });
+                listEl.innerHTML = html;
+            } else {
+                listEl.innerHTML = '<p class="loading-text">暂无藏品</p>';
+            }
+        } catch (err) {
+            listEl.innerHTML = '<p class="loading-text" style="color:red;">加载失败，请重试</p>';
+        }
+    }
+
+    // 购买藏品
+    async function buyCollection(collectionId) {
+        if (!isLogin) {
+            alert('请先登录！');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        if (confirm('确定购买该藏品吗？')) {
+            const orderData = {
+                collectionId: collectionId,
+                userId: currentUser.id // 从登录状态中获取当前用户ID
+            };
+            const result = await buyCollection(orderData); // 调用api.js中已有的接口
+            if (result) {
+                alert('购买成功！');
+                loadCollections(); // 重新加载藏品列表（更新库存）
+            }
+        }
+    }
+
+    // 初始化页面
+    initMarketPage();
+</script>
+</body>
+</html>
