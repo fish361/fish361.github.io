@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字藏品 - 文化打卡与数字藏品平台</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 编辑藏品弹窗样式修复 - 核心解决居中+按钮显示问题 */
+        .modal {
+            display: none; /* 默认隐藏 */
+            position: fixed; /* 覆盖整个屏幕 */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* 半透明遮罩 */
+            z-index: 9999; /* 最高层级，避免被遮挡 */
+            /* 关键：flex布局实现弹窗居中 */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 0; /* 取消默认margin，靠flex居中 */
+            padding: 25px;
+            border-radius: 8px;
+            width: 500px; /* 固定宽度 */
+            max-width: 90%; /* 适配小屏幕 */
+            max-height: 90vh; /* 限制高度，避免超出屏幕 */
+            overflow-y: auto; /* 内容过多时滚动 */
+            position: relative; /* 关闭按钮定位 */
+            box-sizing: border-box; /* 内边距计入宽度 */
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .close-btn:hover {
+            color: #000;
+        }
+
+        /* 表单和按钮样式优化 */
+        .form-group {
+            margin-bottom: 18px; /* 表单组间距，避免挤在一起 */
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box; /* 避免输入框溢出 */
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical; /* 仅垂直拉伸 */
+        }
+
+        /* 按钮样式 - 确保显示完整 */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px; /* 按钮间距 */
+            margin-top: 15px; /* 与表单拉开距离 */
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .btn-delete {
+            background-color: #6c757d;
+            color: #fff;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body data-page-type="collection">
+
+<!-- 导航栏 -->
+<div class="nav">
+    <div class="container">
+        <a href="index.html">首页</a>
+        <a href="check-in.html">文化打卡</a>
+        <a href="story.html">文化故事</a>
+        <a href="collection.html" class="active">数字藏品</a>
+    </div>
+</div>
+
+<!-- 主内容 -->
+<div class="container">
+    <!-- 新增数字藏品 -->
+    <div class="card">
+        <h2>新增数字藏品</h2>
+        <form id="collectionForm">
+            <div class="form-group">
+                <label for="collectionName">藏品名称 *</label>
+                <input type="text" id="collectionName" required placeholder="请输入藏品名称">
+            </div>
+            <div class="form-group">
+                <label for="creator">创作者 *</label>
+                <input type="text" id="creator" required placeholder="请输入创作者名称">
+            </div>
+            <div class="form-group">
+                <label for="creatorInfo">创作者简介</label>
+                <textarea id="creatorInfo" placeholder="请输入创作者简介（选填）"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="collectionCoverUrl">封面图片URL</label>
+                <input type="text" id="collectionCoverUrl" placeholder="请输入封面图片URL（选填）">
+            </div>
+            <div class="form-group">
+                <label for="detailUrl">详情页URL</label>
+                <input type="text" id="detailUrl" placeholder="请输入详情页URL（选填）">
+            </div>
+            <div class="form-group">
+                <label for="price">价格（元）*</label>
+                <input type="number" id="price" required placeholder="请输入藏品价格" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="blockchainId">区块链ID</label>
+                <input type="text" id="blockchainId" placeholder="请输入区块链ID（选填）">
+            </div>
+            <div class="form-group">
+                <label for="stock">库存 *</label>
+                <input type="number" id="stock" required placeholder="请输入库存数量" min="0" step="1">
+            </div>
+            <button type="submit" class="btn btn-primary">提交藏品</button>
+        </form>
+    </div>
+
+    <!-- 数字藏品列表 -->
+    <div class="card">
+        <h2>数字藏品列表</h2>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>藏品名称</th>
+                <th>创作者</th>
+                <th>创作者简介</th>
+                <th>价格</th>
+                <th>库存</th>
+                <th>区块链ID</th>
+                <th>封面</th>
+                <th>详情</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody id="collectionTable">
+            <tr><td colspan="10" class="loading-text" style="text-align:center; padding:20px;">加载中...</td></tr>
+            </tbody>
+        </table>
+        <div id="collectionPagination" class="pagination"></div>
+    </div>
+</div>
+
+<!-- 编辑数字藏品弹窗 -->
+<div id="editCollectionModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeCollectionEditModal()">&times;</span>
+        <h2>编辑数字藏品</h2>
+        <form id="editCollectionForm">
+            <input type="hidden" id="editCollectionId">
+            <div class="form-group">
+                <label for="editCollectionName">藏品名称 *</label>
+                <input type="text" id="editCollectionName" required placeholder="请输入藏品名称">
+            </div>
+            <div class="form-group">
+                <label for="editCreator">创作者 *</label>
+                <input type="text" id="editCreator" required placeholder="请输入创作者名称">
+            </div>
+            <div class="form-group">
+                <label for="editCreatorInfo">创作者简介</label>
+                <textarea id="editCreatorInfo" placeholder="请输入创作者简介（选填）"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editCollectionCoverUrl">封面图片URL</label>
+                <input type="text" id="editCollectionCoverUrl" placeholder="请输入封面图片URL（选填）">
+            </div>
+            <div class="form-group">
+                <label for="editDetailUrl">详情页URL</label>
+                <input type="text" id="editDetailUrl" placeholder="请输入详情页URL（选填）">
+            </div>
+            <div class="form-group">
+                <label for="editPrice">价格（元）*</label>
+                <input type="number" id="editPrice" required placeholder="请输入藏品价格" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="editBlockchainId">区块链ID</label>
+                <input type="text" id="editBlockchainId" placeholder="请输入区块链ID（选填）">
+            </div>
+            <div class="form-group">
+                <label for="editStock">库存 *</label>
+                <input type="number" id="editStock" required placeholder="请输入库存数量" min="0" step="1">
+            </div>
+            <button type="submit" class="btn btn-primary">保存修改</button>
+            <button type="button" class="btn btn-delete" onclick="closeCollectionEditModal()">取消</button>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.staticfile.org/axios/1.6.8/axios.min.js"></script>
+<script src="js/api.js"></script>
+<script>
+    // 页面加载：调用通用初始化 + 绑定编辑表单提交事件
+    window.onload = async () => {
+        await initPage("collection");
+
+        // 绑定编辑表单提交事件（核心修复：编辑内容生效的关键）
+        const editForm = document.getElementById('editCollectionForm');
+        if (editForm) {
+            editForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); // 阻止表单默认刷新行为
+                // 获取编辑的藏品ID和表单数据
+                const id = document.getElementById('editCollectionId').value;
+                const collectionData = {
+                    name: document.getElementById('editCollectionName').value.trim(),
+                    creator: document.getElementById('editCreator').value.trim(),
+                    creatorInfo: document.getElementById('editCreatorInfo').value.trim(),
+                    collectionCoverUrl: document.getElementById('editCollectionCoverUrl').value.trim(),
+                    detailUrl: document.getElementById('editDetailUrl').value.trim(),
+                    price: parseFloat(document.getElementById('editPrice').value),
+                    blockchainId: document.getElementById('editBlockchainId').value.trim(),
+                    stock: parseInt(document.getElementById('editStock').value)
+                };
+                // 调用更新接口
+                const result = await updateCultureCollection(id, collectionData);
+                if (result) {
+                    alert('编辑成功！');
+                    closeCollectionEditModal(); // 关闭弹窗
+                    await initPage("collection"); // 重新加载列表，显示最新数据
+                }
+            });
+        }
+
+        // 绑定新增藏品表单提交事件（补充：避免新增功能缺失）
+        const addForm = document.getElementById('collectionForm');
+        if (addForm) {
+            addForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const collectionData = {
+                    name: document.getElementById('collectionName').value.trim(),
+                    creator: document.getElementById('creator').value.trim(),
+                    creatorInfo: document.getElementById('creatorInfo').value.trim(),
+                    collectionCoverUrl: document.getElementById('collectionCoverUrl').value.trim(),
+                    detailUrl: document.getElementById('detailUrl').value.trim(),
+                    price: parseFloat(document.getElementById('price').value),
+                    blockchainId: document.getElementById('blockchainId').value.trim(),
+                    stock: parseInt(document.getElementById('stock').value)
+                };
+                const result = await addCultureCollection(collectionData);
+                if (result) {
+                    alert('新增藏品成功！');
+                    addForm.reset(); // 清空表单
+                    await initPage("collection"); // 重新加载列表
+                }
+            });
+        }
+    };
+
+    // 弹窗显示逻辑（确保居中）
+    function openCollectionEditModal(collectionId) {
+        getCollectionById(collectionId).then(item => {
+            if (item) {
+                // 填充表单原有数据
+                document.getElementById('editCollectionId').value = item.id;
+                document.getElementById('editCollectionName').value = item.name || '';
+                document.getElementById('editCreator').value = item.creator || '';
+                document.getElementById('editCreatorInfo').value = item.creatorInfo || '';
+                document.getElementById('editCollectionCoverUrl').value = item.collectionCoverUrl || '';
+                document.getElementById('editDetailUrl').value = item.detailUrl || '';
+                document.getElementById('editPrice').value = item.price || '';
+                document.getElementById('editBlockchainId').value = item.blockchainId || '';
+                document.getElementById('editStock').value = item.stock || '';
+                // 显示弹窗（flex布局居中）
+                document.getElementById('editCollectionModal').style.display = 'flex';
+            }
+        });
+    }
+
+    // 弹窗隐藏逻辑
+    function closeCollectionEditModal() {
+        document.getElementById('editCollectionModal').style.display = 'none';
+    }
+</script>
+</body>
+</html>

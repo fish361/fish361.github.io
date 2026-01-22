@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录/注册 - 文化打卡平台</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .login-container {
+            max-width: 450px;
+            margin: 50px auto;
+            padding: 30px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .tab-nav {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .tab-nav button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+        }
+        .tab-nav button.active {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+        }
+        .form-tab {
+            display: none;
+        }
+        .form-tab.active {
+            display: block;
+        }
+        .avatar-upload {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 2px dashed #ddd;
+            margin: 0 auto 10px;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-outline {
+            background: white;
+            color: #007bff;
+            border: 1px solid #007bff;
+        }
+        .btn-outline:hover {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <div class="tab-nav">
+        <button id="loginTabBtn" class="active" onclick="switchTab('login')">登录</button>
+        <button id="registerTabBtn" onclick="switchTab('register')">注册</button>
+    </div>
+
+    <!-- 登录表单 -->
+    <div id="loginTab" class="form-tab active">
+        <div class="form-group">
+            <label for="loginUsername">用户名</label>
+            <input type="text" id="loginUsername" placeholder="请输入用户名">
+        </div>
+        <div class="form-group">
+            <label for="loginPassword">密码</label>
+            <input type="password" id="loginPassword" placeholder="请输入密码">
+        </div>
+        <button class="btn" onclick="handleLogin()">登录</button>
+    </div>
+
+    <!-- 注册表单（调整昵称位置 + 增加确认密码） -->
+    <div id="registerTab" class="form-tab">
+        <div class="avatar-upload">
+            <div class="avatar-preview">
+                <img id="avatarPreview" src="images/default-avatar.png" alt="默认头像">
+            </div>
+            <input type="file" id="avatarFile" accept="image/*" style="display: none;" onchange="previewAvatar()">
+            <button class="btn btn-outline" style="width: auto; padding: 5px 15px;" onclick="document.getElementById('avatarFile').click()">选择头像</button>
+        </div>
+        <!-- 调整后顺序：用户名 → 昵称 → 密码 → 确认密码 -->
+        <div class="form-group">
+            <label for="regUsername">用户名</label>
+            <input type="text" id="regUsername" placeholder="请设置用户名">
+        </div>
+        <div class="form-group">
+            <label for="regNickname">昵称</label>
+            <input type="text" id="regNickname" placeholder="请设置昵称（选填）">
+        </div>
+        <div class="form-group">
+            <label for="regPassword">密码</label>
+            <input type="password" id="regPassword" placeholder="请设置密码">
+        </div>
+        <div class="form-group">
+            <label for="regConfirmPassword">确认密码</label>
+            <input type="password" id="regConfirmPassword" placeholder="请再次输入密码">
+        </div>
+        <button class="btn" onclick="handleRegister()">注册</button>
+    </div>
+</div>
+
+<script src="https://cdn.staticfile.org/axios/1.6.8/axios.min.js"></script>
+<script src="js/api.js"></script>
+<script>
+    // 切换登录/注册标签
+    function switchTab(type) {
+        const loginTab = document.getElementById('loginTab');
+        const registerTab = document.getElementById('registerTab');
+        const loginBtn = document.getElementById('loginTabBtn');
+        const registerBtn = document.getElementById('registerTabBtn');
+
+        if (type === 'login') {
+            loginTab.classList.add('active');
+            registerTab.classList.remove('active');
+            loginBtn.classList.add('active');
+            registerBtn.classList.remove('active');
+        } else {
+            loginTab.classList.remove('active');
+            registerTab.classList.add('active');
+            loginBtn.classList.remove('active');
+            registerBtn.classList.add('active');
+        }
+    }
+
+    // 预览头像
+    function previewAvatar() {
+        const file = document.getElementById('avatarFile').files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('avatarPreview').src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+
+    // 处理登录（修复跳转逻辑）
+    async function handleLogin() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+
+        if (!username || !password) {
+            alert('请输入用户名和密码');
+            return;
+        }
+
+        try {
+            // 调用登录接口
+            const userData = await doLogin(username, password);
+            if (userData) {
+                alert('登录成功！');
+                // 强制跳转首页（修复不跳转问题）
+                window.location.href = 'index.html';
+            }
+        } catch (err) {
+            alert('登录失败：' + (err.message || '用户名或密码错误'));
+        }
+    }
+
+    // 处理注册（新增确认密码校验）
+    async function handleRegister() {
+        const username = document.getElementById('regUsername').value.trim();
+        const nickname = document.getElementById('regNickname').value.trim() || username;
+        const password = document.getElementById('regPassword').value.trim();
+        const confirmPassword = document.getElementById('regConfirmPassword').value.trim();
+        const avatarFile = document.getElementById('avatarFile').files[0];
+
+        // 基础校验
+        if (!username) { alert('请填写用户名'); return; }
+        if (!password) { alert('请填写密码'); return; }
+        if (password !== confirmPassword) { alert('两次密码不一致'); return; }
+
+        // 构建表单数据（支持文件上传）
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('nickname', nickname);
+        formData.append('password', password);
+        formData.append('confirmPassword', confirmPassword); // 新增确认密码
+        if (avatarFile) {
+            formData.append('avatar', avatarFile);
+        }
+
+        try {
+            const result = await doRegisterWithAvatar(formData);
+            if (result) {
+                alert('注册成功！请登录');
+                switchTab('login');
+                document.getElementById('loginUsername').value = username;
+                document.getElementById('loginPassword').value = '';
+            }
+        } catch (err) {
+            alert('注册失败：' + (err.message || '服务器错误'));
+        }
+    }
+</script>
+</body>
+</html>
